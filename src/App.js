@@ -152,7 +152,7 @@ class App extends Component {
       <div className="App">
         {visible && name !== "" ? (
           <Fragment>
-            <input value={name} />
+            <input value={name} readOnly />
             <button
               onClick={() => {
                 this.setState({ visible: false });
@@ -183,7 +183,7 @@ class App extends Component {
         <canvas id="wheel" />
 
         <ul style={{ listStyleType: "circle" }}>
-          {map(list, val => <li>{val}</li>)}
+          {map(list, (val, key) => <li key={key}>{val}</li>)}
         </ul>
       </div>
     );
