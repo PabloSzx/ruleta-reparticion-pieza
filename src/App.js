@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import PrizeWheel from "prize-wheel";
-import { filter, cloneDeep } from "lodash";
+import { filter, cloneDeep, shuffle, concat, map } from "lodash";
 
 class Personas extends Component {
   constructor(props) {
@@ -32,8 +32,18 @@ class Personas extends Component {
     };
 
     this.state = {
-      settings
+      settings,
+      visible: true
     };
+  }
+
+  async shuffleWheel() {
+    const aux = cloneDeep(this.state.settings);
+    aux.members = shuffle(aux.members);
+    await this.setState({
+      settings: aux
+    });
+    this.configWheel();
   }
 
   configWheel() {
@@ -46,27 +56,36 @@ class Personas extends Component {
   }
 
   render() {
-    const { settings } = this.state;
+    const { settings, visible } = this.state;
     return (
       <div>
         <canvas id="wheel2" />
-        <button
-          onClick={() => {
-            this.wheel.spin(async member => {
-              alert(`Le toca asignacion de pieza a: ${member}`);
-              const aux = cloneDeep(settings);
-              aux.members = filter(aux.members, val => val !== member);
+        {visible && this.props.name === "" ? (
+          <Fragment>
+            <button
+              onClick={() => {
+                this.setState({ visible: false });
+                this.wheel.spin(async member => {
+                  alert(`Le toca asignacion de pieza a: ${member}`);
+                  const aux = cloneDeep(settings);
+                  aux.members = filter(aux.members, val => val !== member);
 
-              await this.setState({
-                settings: aux
-              });
-              this.configWheel();
-              this.props.onChange(member);
-            });
-          }}
-        >
-          RULETA DE PERSONAS
-        </button>
+                  await this.setState({
+                    settings: aux,
+                    visible: true
+                  });
+                  this.configWheel();
+                  this.props.onChange(member);
+                });
+              }}
+            >
+              GIRAR RULETA DE PERSONAS
+            </button>
+            <button onClick={() => this.shuffleWheel()}>
+              BARAJAR PERSONAS
+            </button>
+          </Fragment>
+        ) : null}
       </div>
     );
   }
@@ -103,8 +122,19 @@ class App extends Component {
 
     this.state = {
       settings,
-      name: ""
+      name: "",
+      visible: true,
+      list: []
     };
+  }
+
+  async shuffleWheel() {
+    const aux = cloneDeep(this.state.settings);
+    aux.members = shuffle(aux.members);
+    await this.setState({
+      settings: aux
+    });
+    this.configWheel();
   }
 
   configWheel() {
@@ -117,35 +147,44 @@ class App extends Component {
   }
 
   render() {
-    const { name, settings } = this.state;
+    const { name, settings, visible, list } = this.state;
     return (
       <div className="App">
-        {name !== "" ? (
+        {visible && name !== "" ? (
           <Fragment>
             <input value={name} />
             <button
               onClick={() => {
+                this.setState({ visible: false });
                 this.wheel.spin(async member => {
-                  alert(`${name} ha obtenido la pieza: ${member}`);
+                  const str = `${name} ha obtenido la pieza: ${member}`;
+                  this.setState({ list: concat(list, str) });
+                  alert(str);
                   const aux = cloneDeep(settings);
                   aux.members = filter(aux.members, val => val !== member);
 
                   await this.setState({
                     settings: aux,
-                    name: ""
+                    name: "",
+                    visible: true
                   });
                   this.configWheel();
                 });
               }}
             >
-              RULETA SELECCION DE PIEZA
+              GIRAR RULETA DE SELECCION DE PIEZA
             </button>
+            <button onClick={() => this.shuffleWheel()}>BARAJAR PIEZAS</button>
           </Fragment>
         ) : null}
 
-        <Personas onChange={name => this.setState({ name })} />
+        <Personas name={name} onChange={name => this.setState({ name })} />
 
         <canvas id="wheel" />
+
+        <ul style={{ listStyleType: "circle" }}>
+          {map(list, val => <li>{val}</li>)}
+        </ul>
       </div>
     );
   }
